@@ -1,1 +1,1 @@
-# testeDevJr
+https://github.com/lucascudo/laravel-pt-BR-localization
