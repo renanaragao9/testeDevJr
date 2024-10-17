@@ -44,17 +44,14 @@
         </div>
       </form>
 
-      <!-- Exibe o nome do usuário -->
       <div v-if="userName" class="mt-3 alert alert-success">
         <strong>Bem-vindo, {{ userName }}!</strong>
       </div>
 
-      <!-- Exibe o token gerado -->
       <div v-if="token" class="mt-3 alert alert-info">
         <strong>Token:</strong> {{ token }}
       </div>
 
-      <!-- Mensagem de sucesso -->
       <div v-if="message" class="mt-3 alert alert-success">
         {{ message }}
       </div>
@@ -88,9 +85,9 @@ export default {
         });
 
         // Salva o token na variável e mostra na tela
-        this.token = response.data.token;
-        this.message = response.data.message; // Mensagem de sucesso
-        localStorage.setItem('authToken', this.token);
+        this.token = response.data.token || ''; // Garantindo que token tenha valor padrão
+        this.message = response.data.message || 'Login realizado com sucesso!'; // Mensagem de sucesso
+        sessionStorage.setItem('authToken', this.token); // Armazena o token no sessionStorage
 
         // Log no console para depuração
         console.log('Token:', this.token);
@@ -98,29 +95,38 @@ export default {
         // Requisição para pegar o nome do usuário autenticado
         await this.getUserInfo();
 
+        // Redireciona para a rota "teste-backend" após login bem-sucedido
+        this.$router.push('/teste-backend').then(() => {
+          window.location.reload(); // Recarrega a página para garantir que as informações sejam atualizadas
+        });
+
       } catch (error) {
-        if (error.response && error.response.data.errors) {
-          this.errors = Object.values(error.response.data.errors).flat();
+        // Captura a mensagem de erro de acordo com o código de status
+        if (error.response && error.response.status === 429) {
+          this.errors = [error.response.data.message]; // Mensagem personalizada para o erro 429
+        } else if (error.response && error.response.data.errors) {
+          this.errors = Object.values(error.response.data.errors).flat(); // Captura erros de validação
         } else {
-          this.errors = ['Erro ao realizar login. Tente novamente.'];
+          this.errors = ['Erro ao realizar login. Tente novamente.']; // Mensagem genérica
         }
       }
     },
 
+    
     async getUserInfo() {
       try {
         const response = await axios.get('http://localhost:8000/api/user', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${sessionStorage.getItem('authToken')}`, // Obtenha o token do sessionStorage
           },
           withCredentials: true // Importante para a autenticação com Sanctum
         });
 
         // Exibe o nome do usuário
-        this.userName = response.data.name;
+        this.userName = response.data.name || ''; // Garantindo que userName tenha valor padrão
 
-        // Salva o nome no localStorage para persistência
-        localStorage.setItem('userName', this.userName);
+        // Salva o nome no sessionStorage para persistência
+        sessionStorage.setItem('userName', this.userName);
       } catch (error) {
         console.error('Erro ao obter dados do usuário:', error);
       }
@@ -128,4 +134,3 @@ export default {
   }
 };
 </script>
-  

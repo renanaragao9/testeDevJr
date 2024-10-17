@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Função de Registro
+
     public function register(Request $request)
     {
         $request->validate([
@@ -19,39 +19,57 @@ class AuthController extends Controller
             'password'  => 'required|string|min:6|confirmed',
         ]);
 
+        // Verifica se o usuário já está autenticado
+        if (Auth::check()) {
+            return response()->json([
+                'message' => 'Você já está autenticado. Não é possível criar um novo registro.',
+            ], 403);
+        }
+
+        // Cria um novo usuário
         $user = User::create([
             'name'      => $request->name,
             'email'     => $request->email,
             'password'  => Hash::make($request->password),
         ]);
 
-        return response()->json(['user' => $user, 'token' => $user->createToken('API Token')->plainTextToken]);
+        return response()->json([
+            'user' => $user, 
+            'token' => $user->createToken('API Token')->plainTextToken
+        ]);
     }
+
 
     // função de login
     public function login(Request $request)
     {
+        // Validação dos dados de entrada
         $request->validate([
             'email'     => 'required|email',
             'password'  => 'required',
         ]);
-        
 
+        // Verifica se o usuário já está autenticado
+        if (Auth::check()) {
+            return response()->json([
+                'message' => 'Você já está autenticado.',
+            ], 403); // Código 403 - Proibido
+        }
+
+        // Tenta autenticar o usuário
         if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => ['As credencias do email esta incorreta.'],
-            ]);
+            // Mensagem de erro genérica para não expor informações
+            return response()->json([
+                'message' => "Credenciais inválidas."
+            ], 401); // Código 401 - Não autorizado
         }
 
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            
-            $user = Auth::user();
-            
-            // Cria um novo token para o usuário
-            $token = $user->createToken('API Token')->plainTextToken; // Ignorar erro (problema no intelephense)
+        // Se a autenticação for bem-sucedida, cria um novo token
+        $user = Auth::user();
+        $token = $user->createToken('API Token')->plainTextToken;
 
-            return response()->json(['token' => $token]);
-        }
+        // Retorna o token em resposta
+        return response()->json(['token' => $token]);
     }
 
     // Função de Logout
@@ -61,5 +79,6 @@ class AuthController extends Controller
     
         return response()->json(['message' => 'Logout realizado com sucesso!']);
     }
+    
 }
 

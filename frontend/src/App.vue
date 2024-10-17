@@ -1,23 +1,27 @@
 <template>
-  <div id="app">
+  <div id="app" @mousemove="resetTimer" @keydown="resetTimer">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">Teste Dev</a>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
             <li class="nav-item">
-              <router-link class="nav-link" to="/register">Registro</router-link>
+              <router-link class="nav-link" v-if="!isAuthenticated" to="/register">Registro</router-link>
             </li>
+            
             <li class="nav-item">
-              <router-link class="nav-link" to="/teste-backend">Teste Backend</router-link>
+              <router-link class="nav-link" v-if="isAuthenticated" to="/teste-backend">Teste Backend</router-link>
             </li>
+            
             <!-- Exibe o nome do usuário se autenticado -->
             <li class="nav-item" v-if="isAuthenticated">
               <span class="nav-link">Olá, {{ userName }}</span>
             </li>
+            
             <li class="nav-item" v-if="!isAuthenticated">
               <router-link class="nav-link" to="/login">Login</router-link>
             </li>
+            
             <!-- Botão de logout se autenticado -->
             <li class="nav-item" v-if="isAuthenticated">
               <button class="nav-link btn btn-link" @click="logout">Logout</button>
@@ -35,18 +39,27 @@ import axios from 'axios';
 
 export default {
   name: 'App',
+  data() {
+    return {
+      timeout: null,
+      timeoutDuration: 60 * 60 * 1000, // 60 minutos em milissegundos
+    };
+  },
   computed: {
     isAuthenticated() {
-      return !!localStorage.getItem('authToken'); // Verifica se o token existe
+      return !!sessionStorage.getItem('authToken'); // Verifica se o token existe no sessionStorage
     },
     userName() {
-      return localStorage.getItem('userName'); // Obtém o nome do usuário salvo no localStorage
+      return sessionStorage.getItem('userName'); // Obtém o nome do usuário salvo no sessionStorage
     }
+  },
+  created() {
+    this.startIdleTimer(); // Inicia o timer de inatividade
   },
   methods: {
     async logout() {
       try {
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         if (token) {
           // Envia a requisição para o logout no servidor
           await axios.post('http://localhost:8000/api/logout', {}, {
@@ -56,13 +69,13 @@ export default {
             withCredentials: true, // Garantir que o cookie seja enviado
           });
 
-          // Remove o token e o nome do usuário do localStorage
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userName');
+          // Remove o token e o nome do usuário do sessionStorage
+          sessionStorage.removeItem('authToken');
+          sessionStorage.removeItem('userName');
 
           // Redireciona para a página de login e recarrega a página
           this.$router.push({ name: 'Login' }).then(() => {
-            window.location.reload();  // Recarrega a página para garantir que as credenciais sejam removidas
+            window.location.reload(); // Recarrega a página para garantir que as credenciais sejam removidas
           });
 
         } else {
@@ -71,6 +84,20 @@ export default {
       } catch (error) {
         console.error('Erro ao realizar logout:', error);
       }
+    },
+    resetTimer() {
+      clearTimeout(this.timeout); // Limpa o timer atual
+      this.startIdleTimer(); // Reinicia o timer
+    },
+    startIdleTimer() {
+      this.timeout = setTimeout(() => {
+        // Remove token e redireciona para login
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('userName');
+        this.$router.push({ name: 'Login' }).then(() => {
+          window.location.reload(); // Recarrega a página
+        });
+      }, this.timeoutDuration);
     }
   }
 };

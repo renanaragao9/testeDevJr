@@ -21,7 +21,8 @@ use App\Http\Controllers\ImageController;
 // Rotas para autenticação
 Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login']); // se quiser bloquear o usuario com numeros de tentativas utilzie o ->middleware('login.attempt')
+    
     //Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 });
 
