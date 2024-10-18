@@ -1,9 +1,15 @@
 <template>
-  <div class="d-flex justify-content-center align-items-center vh-100">
+  <div v-if="isLoading" class="d-flex justify-content-center align-items-center">
+    <div class="loading-dots">
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+  </div>
+
+  <div v-else class="d-flex justify-content-center align-items-center">
     <div class="card p-4 shadow-lg" style="width: 24rem;">
-      <div class="text-center mb-4">
-        <h2 class="text-primary">Registro</h2>
-      </div>
+      <h2 class="text-primary text-center mb-4">Registro</h2>
       <form @submit.prevent="registrar">
         <div class="mb-3">
           <label for="name" class="form-label">Nome</label>
@@ -78,6 +84,7 @@
 
 <script>
 import axios from 'axios';
+import api from '@/axios';
 
 export default {
   data() {
@@ -90,44 +97,42 @@ export default {
       },
       errors: [],
       token: null,
+      isLoading: false,
     };
   },
   methods: {
     async registrar() {
+      this.isLoading = true;
       try {
         this.errors = [];
-        const response = await axios.post('http://localhost:8000/api/register', this.form); // Altere para a URL correta
+        const response = await api.post('/register', this.form);
         this.token = response.data.token;
 
-        // Armazena o token no sessionStorage
         sessionStorage.setItem('authToken', this.token);
-
-        // Requisição para obter informações do usuário após o registro
         await this.getUserInfo();
 
-        // Redireciona para a rota "teste-backend" após registro bem-sucedido
-        this.$router.push('/teste-backend').then(() => {
-          window.location.reload(); // Recarrega a página para garantir que as informações sejam atualizadas
+        this.$router.push('/').then(() => {
+          window.location.reload();
         });
-
       } catch (error) {
         if (error.response && error.response.data.errors) {
           this.errors = Object.values(error.response.data.errors).flat();
         } else {
           this.errors = ['Erro ao registrar. Tente novamente.'];
         }
+      } finally {
+        this.isLoading = false;
       }
     },
     async getUserInfo() {
       try {
-        const response = await axios.get('http://localhost:8000/api/user', {
+        const response = await api.get('/user', {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('authToken')}`, // Obtenha o token do sessionStorage
+            Authorization: `Bearer ${sessionStorage.getItem('authToken')}`,
           },
-          withCredentials: true // Importante para a autenticação com Sanctum
+          withCredentials: true,
         });
 
-        // Armazena o nome do usuário no sessionStorage
         sessionStorage.setItem('userName', response.data.name);
       } catch (error) {
         console.error('Erro ao obter dados do usuário:', error);
@@ -138,7 +143,50 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos adicionais */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Aplicando a fonte da Microsoft */
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dot {
+  height: 12px;
+  width: 12px;
+  margin: 0 5px;
+  background-color: #0078d4; /* Cor do ponto */
+  border-radius: 50%;
+  animation: loading 1s infinite ease-in-out;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loading {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+}
+
 .vh-100 {
   height: 100vh;
 }
@@ -146,10 +194,6 @@ export default {
 .card {
   border-radius: 10px;
   background-color: #ffffff;
-}
-
-.logo {
-  width: 100px;
 }
 
 h2 {

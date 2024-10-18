@@ -1,9 +1,16 @@
 <template>
-  <div class="d-flex justify-content-center align-items-center vh-100">
+  <div v-if="isLoading" class="d-flex justify-content-center align-items-center">
+    <div class="loading-dots">
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+  </div>
+
+  <div v-else class="d-flex justify-content-center align-items-center">
     <div class="card p-4 shadow-lg" style="width: 24rem;">
-      <div class="text-center mb-4">
-        <h2 class="text-primary">Login</h2>
-      </div>
+      <h2 class="text-primary text-center mb-4">Login</h2>
+
       <form @submit.prevent="login">
         <div class="mb-3">
           <label for="email" class="form-label">Email</label>
@@ -48,12 +55,12 @@
         <strong>Bem-vindo, {{ userName }}!</strong>
       </div>
 
-      <div v-if="token" class="mt-3 alert alert-info">
-        <strong>Token:</strong> {{ token }}
-      </div>
-
       <div v-if="message" class="mt-3 alert alert-success">
         {{ message }}
+      </div>
+
+      <div v-if="logoutMessage" class="mt-3 alert alert-success">
+        {{ logoutMessage }}
       </div>
     </div>
   </div>
@@ -61,9 +68,9 @@
 
 <script>
 import axios from 'axios';
+import api from '@/axios';
 
 export default {
-  name: 'Login',
   data() {
     return {
       form: {
@@ -74,63 +81,117 @@ export default {
       token: '',
       message: '',
       userName: '',
+      logoutMessage: '',
+      isLoading: true,
     };
+  },
+  mounted() {
+    setTimeout(() => {
+      this.isLoading = false;
+    }, 1000);
+
+    this.logoutMessage = sessionStorage.getItem('logoutMessage') || '';
+    sessionStorage.removeItem('logoutMessage');
   },
   methods: {
     async login() {
+      
+      this.isLoading = true;
+      
       try {
-        this.errors = []; // Limpa erros anteriores
-        const response = await axios.post('http://localhost:8000/api/login', this.form, {
-          withCredentials: true // Importante para o Laravel Sanctum com cookies
+        this.errors = [];
+        const response = await api.post('/login', this.form, {
+          withCredentials: true,
         });
 
-        // Salva o token na variável e mostra na tela
-        this.token = response.data.token || ''; // Garantindo que token tenha valor padrão
-        this.message = response.data.message || 'Login realizado com sucesso!'; // Mensagem de sucesso
-        sessionStorage.setItem('authToken', this.token); // Armazena o token no sessionStorage
+        this.token = response.data.token || '';
+        this.message = response.data.message || 'Login realizado com sucesso!';
+        sessionStorage.setItem('authToken', this.token);
 
-        // Log no console para depuração
-        console.log('Token:', this.token);
-
-        // Requisição para pegar o nome do usuário autenticado
         await this.getUserInfo();
 
-        // Redireciona para a rota "teste-backend" após login bem-sucedido
-        this.$router.push('/teste-backend').then(() => {
-          window.location.reload(); // Recarrega a página para garantir que as informações sejam atualizadas
+        this.$router.push('/').then(() => {
+          window.location.reload();
         });
-
+      
       } catch (error) {
-        // Captura a mensagem de erro de acordo com o código de status
         if (error.response && error.response.status === 429) {
-          this.errors = [error.response.data.message]; // Mensagem personalizada para o erro 429
+          this.errors = [error.response.data.message];
+        
         } else if (error.response && error.response.data.errors) {
-          this.errors = Object.values(error.response.data.errors).flat(); // Captura erros de validação
+          this.errors = Object.values(error.response.data.errors).flat();
+        
         } else {
-          this.errors = ['Erro ao realizar login. Tente novamente.']; // Mensagem genérica
+          this.errors = ['Erro ao realizar login. Tente novamente.'];
+        
         }
+      
+      } finally {
+        this.isLoading = false;
       }
     },
 
-    
     async getUserInfo() {
       try {
-        const response = await axios.get('http://localhost:8000/api/user', {
+        const response = await api.get('/user', {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('authToken')}`, // Obtenha o token do sessionStorage
+            Authorization: `Bearer ${sessionStorage.getItem('authToken')}`,
           },
-          withCredentials: true // Importante para a autenticação com Sanctum
+          withCredentials: true,
         });
 
-        // Exibe o nome do usuário
-        this.userName = response.data.name || ''; // Garantindo que userName tenha valor padrão
-
-        // Salva o nome no sessionStorage para persistência
+        this.userName = response.data.name || '';
         sessionStorage.setItem('userName', this.userName);
       } catch (error) {
         console.error('Erro ao obter dados do usuário:', error);
       }
-    }
-  }
+    },
+  },
 };
 </script>
+
+<style scoped>
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Aplicando a fonte da Microsoft */
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dot {
+  height: 12px;
+  width: 12px;
+  margin: 0 5px;
+  background-color: #0078d4; /* Cor do ponto */
+  border-radius: 50%;
+  animation: loading 1s infinite ease-in-out;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loading {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+}
+</style>

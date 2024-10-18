@@ -1,6 +1,5 @@
 <template>
     <div>
-      <h1>Página de Teste Backend</h1>
       <TesteBackend />
     </div>
   </template>

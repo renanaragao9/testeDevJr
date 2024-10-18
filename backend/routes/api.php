@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ImageController;
 
@@ -18,34 +19,42 @@ use App\Http\Controllers\ImageController;
 |
 */
 
+
+
 // Rotas para autenticação
 Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']); // se quiser bloquear o usuario com numeros de tentativas utilzie o ->middleware('login.attempt')
-    
-    //Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 });
 
 // Rotas com autenticação necessaria
 Route::middleware('auth:sanctum')->group(function () {
-    // Route::get('/resource', [ResourceController::class, 'index']);
-    // Route::post('/resource', [ResourceController::class, 'store']);
-    // Route::put('/resource/{id}', [ResourceController::class, 'update']);
-    // Route::delete('/resource/{id}', [ResourceController::class, 'destroy']);
-
-    Route::apiResource('categories', CategoryController::class);
-    Route::apiResource('products', ProductController::class);
-    Route::middleware('auth:sanctum')->post('/images', [ImageController::class, 'store']);
+    Route::apiResource('categories',    CategoryController::class);
+    Route::apiResource('products',      ProductController::class);
     
-    // Rota de logout
+    Route::middleware('auth:sanctum')->post('/images', [ImageController::class, 'store']);
+    Route::middleware('auth:sanctum')->get('/images/{id}/download', [ImageController::class, 'download']);
+
+    Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+        return $request->user();
+    });
+    
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+    
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-// Rota de testes
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user(); // Retorna os dados do usuário autenticado
-});
+// Teste de conexão
+Route::get('/status', function () {
+    $dbStatus = \DB::connection()->getPdo() ? 'Conexão com o banco de dados feita com sucesso!'     : 'Erro ao conectar ao banco de dados.';
 
-Route::get('/teste-rota', function () {
-    return response()->json(['message' => 'Backend está funcionando!!']);
+    $emailStatus = true; 
+    $emailConnectionStatus = $emailStatus   ? 'Conexão com o servidor de e-mail está funcionando!'  : 'Erro ao conectar ao servidor de e-mail.';
+
+    return response()->json([
+        'message' => 'Backend está funcionando!',
+        'status' => 'success',
+        'db_status' => $dbStatus,
+        'email_status' => $emailConnectionStatus,
+    ]);
 });

@@ -60,8 +60,7 @@ class ProductController extends Controller
 
     public function edit($id)
     {
-        $product = Product::with('category')->findOrFail($id);
-        
+        $product    = Product::with('category')->findOrFail($id);
         $categories = Category::all();
         
         return response()->json(['product' => $product, 'categories' => $categories]);

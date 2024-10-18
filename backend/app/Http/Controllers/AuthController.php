@@ -7,7 +7,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-
+/*  Lista de codigos para consultar e possivels erros:
+    200 OK: A requisição foi bem-sucedida.
+    201 Created: O recurso foi criado com sucesso.
+    204 No Content: A requisição foi bem-sucedida, mas não há conteúdo a retornar.
+    400 Bad Request: A requisição não pôde ser entendida ou estava malformada.
+    401 Unauthorized: A requisição requer autenticação do usuário.
+    403 Forbidden: O servidor entendeu a requisição, mas se recusa a autorizá-la.
+    404 Not Found: O recurso solicitado não foi encontrado.
+    409 Conflict: Conflito com o estado atual do recurso (por exemplo, quando um e-mail já está em uso).
+*/
 class AuthController extends Controller
 {
 
@@ -17,16 +26,16 @@ class AuthController extends Controller
             'name'      => 'required|string|max:255',
             'email'     => 'required|string|email|max:255|unique:users',
             'password'  => 'required|string|min:6|confirmed',
+        ], [
+            'email.unique' => 'Este e-mail já está registrado.',
         ]);
 
-        // Verifica se o usuário já está autenticado
         if (Auth::check()) {
             return response()->json([
                 'message' => 'Você já está autenticado. Não é possível criar um novo registro.',
             ], 403);
         }
 
-        // Cria um novo usuário
         $user = User::create([
             'name'      => $request->name,
             'email'     => $request->email,
@@ -39,40 +48,32 @@ class AuthController extends Controller
         ]);
     }
 
-
-    // função de login
     public function login(Request $request)
     {
-        // Validação dos dados de entrada
         $request->validate([
             'email'     => 'required|email',
             'password'  => 'required',
         ]);
 
-        // Verifica se o usuário já está autenticado
         if (Auth::check()) {
             return response()->json([
                 'message' => 'Você já está autenticado.',
-            ], 403); // Código 403 - Proibido
+            ], 403);
         }
 
-        // Tenta autenticar o usuário
         if (!Auth::attempt($request->only('email', 'password'))) {
-            // Mensagem de erro genérica para não expor informações
             return response()->json([
                 'message' => "Credenciais inválidas."
-            ], 401); // Código 401 - Não autorizado
+            ], 401);
         }
 
-        // Se a autenticação for bem-sucedida, cria um novo token
         $user = Auth::user();
+        
         $token = $user->createToken('API Token')->plainTextToken;
 
-        // Retorna o token em resposta
         return response()->json(['token' => $token]);
     }
 
-    // Função de Logout
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

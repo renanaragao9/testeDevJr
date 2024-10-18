@@ -4,6 +4,9 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 // Configurações do backend
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;

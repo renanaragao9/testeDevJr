@@ -5,6 +5,7 @@ import LoginView                          from './views/Auth/LoginView.vue';
 import CategoriesView                     from './views/Categories/CategoriesView.vue';
 import ProductsView                       from './views/Products/ProductsView.vue';
 import DashboardView                      from './views/Dashboard/DashboardView.vue';
+import NotFound                           from './views/NotFound.vue';
 
 // Função para verificar se o usuário está autenticado
 function isAuthenticated() {
@@ -48,17 +49,11 @@ const routes = [
       }
     },
   },
-  {
-    path: '/teste-backend',
+  { // Utilize para fazer testes de conexão com o backend
+    path: '/aBcDeFgHiJkLmNoPqRsTuVwXyZ',
     name: 'TesteBackend',
     component: TesteBackendView,
-    beforeEnter: (to, from, next) => {
-      if (isAuthenticated()) {
-        next();
-      } else {
-        next({ name: 'Login' });
-      }
-    },
+
   },
   {
     path: '/register',
@@ -68,7 +63,7 @@ const routes = [
       if (!isAuthenticated()) {
         next();
       } else {
-        next({ name: 'TesteBackend' });
+        next({ name: 'Dashboard' });
       }
     },
   },
@@ -80,9 +75,14 @@ const routes = [
       if (!isAuthenticated()) {
         next();
       } else {
-        next({ name: 'TesteBackend' });
+        next({ name: 'Dashboard' });
       }
     },
+  },
+  {
+    path: '/:catchAll(.*)', // Captura todas as rotas não definidas
+    name: 'NotFound',
+    component: NotFound,
   },
 ];
 

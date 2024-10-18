@@ -1,213 +1,212 @@
 <template>
-    <div class="container">
-      <h1 class="text-center" id="titulo">Gerenciar Produtos</h1>
-      
-      <div class="text-center">
-        <button class="btn btn-light" @click="openCreateModal">
+  <div class="container py-4">
+    <div class="col s12">
+      <h1 class="text-center custom-title">Gerenciar Produtos</h1>
+
+      <div class="text-center mb-4">
+        <button class="btn btn-add-category" @click="openCreateModal">
           <i class="fa-solid fa-plus"></i> Adicionar Produto
         </button>
       </div>
-  
-      <div v-if="message.content" :class="`alert ${message.type} alert-dismissible fade show`" role="alert">
-        {{ message.content }}
-        <button type="button" class="btn-close" @click="clearMessage" aria-label="Fechar"></button>
+    </div>
+
+    <div v-if="message.content" :class="`alert ${message.type} alert-dismissible fade show`" role="alert">
+      {{ message.content }}
+      <button type="button" class="btn-close" @click="clearMessage" aria-label="Fechar"></button>
+    </div>
+
+    <div class="card shadow-lg border-0 rounded">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <input
+          v-model="searchTerm"
+          @input="filterProducts"
+          class="form-control form-control-lg"
+          type="text"
+          placeholder="Buscar Produto..."
+        />
       </div>
-  
-      <div class="card shadow-lg border-0 rounded">
-        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap">
-          <div class="d-flex justify-content-center flex-grow-1">
-            <input
-              v-model="searchTerm"
-              @input="filterProducts"
-              class="form-control form-control-lg"
-              type="text"
-              placeholder="Buscar Produto..."
-              style="border-radius: 20px;"
-            />
-          </div>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-bordered table-hover mb-0" style="width: 100%;">
-              <thead class="table-dark">
-                <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Nome do Produto</th>
-                  <th scope="col">Descrição</th>
-                  <th scope="col">Categoria</th>
-                  <th scope="col">Preço</th>
-                  <th scope="col">Qtd.</th>
-                  <th scope="col">Imagem</th>
-                  <th scope="col" class="text-center">Ações</th>
-                </tr>
-              </thead>
-              
-              <tbody class="text-center">
-                <tr v-for="(product, index) in paginatedProducts" :key="product.id">
-                  <th scope="row">{{ index + 1 + (currentPage - 1) * itemsPerPage }}</th>
-                  <td>{{ product.name }}</td>
-                  <td>{{ product.description }}</td>
-                  <td>{{ getCategoryName(product.category_id) }}</td>
-                  <td>{{ formatCurrency(product.price) }}</td>
-                  <td>{{ (product.qtd && product.qtd >= 0) ? product.qtd : 0 }}</td>
-                  <td>
-                    <img
-                      v-if="product.images && product.images.length > 0 && product.images[0].filename"
-                      :src="'http://localhost:8000/storage/images/' + product.images[0].filename"
-                      class="image-circle"
-                      @click="openImageModal('http://localhost:8000/storage/images/' + product.images[0].filename)"
-                      style="cursor: pointer;"
-                      alt="Imagem do Produto"
-                    />
-                    <span v-else>-</span>
-                  </td>
-                  <td class="text-center">
-                    <button class="btn btn-sm btn-warning me-2 rounded-pill" @click="openEditModal(product)">
+      
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>Nome do Produto</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Qtd.</th>
+                <th>Imagem</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            
+            <tbody class="text-center">
+              <tr v-for="(product, index) in paginatedProducts" :key="product.id">
+                <th>{{ index + 1 + (currentPage - 1) * itemsPerPage }}</th>
+                <td>{{ product.name }}</td>
+                <td>{{ product.description }}</td>
+                <td>{{ getCategoryName(product.category_id) }}</td>
+                <td>{{ formatCurrency(product.price) }}</td>
+                <td>{{ (product.qtd && product.qtd >= 0) ? product.qtd : 0 }}</td>
+                <td>
+                  <img
+                    v-if="product.images && product.images.length > 0 && product.images[0].filename"
+                    :src="'http://localhost:8000/storage/images/' + product.images[0].filename"
+                    class="image-circle"
+                    @click="openImageModal('http://localhost:8000/storage/images/' + product.images[0].filename, product.images[0].id)"
+                    style="cursor: pointer;"
+                    alt="Imagem do Produto"
+                  />
+                  <span v-else>-</span>
+                </td>
+                
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="btn btn-edit me-2" @click="openEditModal(product)">
                       <i class="bi bi-pencil"></i> Editar
                     </button>
-                    <button class="btn btn-sm btn-danger rounded-pill" @click="openDeleteModal(product)">
+                    
+                    <button class="btn btn-delete" @click="openDeleteModal(product)">
                       <i class="bi bi-trash"></i> Excluir
                     </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-  
-          <!-- Paginação -->
-          <nav class="mt-3">
-            <ul class="pagination justify-content-center">
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        <nav class="mt-3">
+          <div class="pagination-container">
+            <ul class="pagination justify-content-center flex-wrap">
               <li class="page-item" :class="{ disabled: currentPage === 1 }">
                 <button class="page-link" @click="changePage(currentPage - 1)" aria-label="Anterior">
                   <span aria-hidden="true">&laquo;</span>
                 </button>
               </li>
+              
               <li class="page-item" :class="{ active: page === currentPage }" v-for="page in totalPages" :key="page">
                 <button class="page-link" @click="changePage(page)">{{ page }}</button>
               </li>
+              
               <li class="page-item" :class="{ disabled: currentPage === totalPages }">
                 <button class="page-link" @click="changePage(currentPage + 1)" aria-label="Próximo">
                   <span aria-hidden="true">&raquo;</span>
                 </button>
               </li>
             </ul>
-          </nav>
-        </div>
+          </div>
+        </nav>
       </div>
+    </div>
 
-      <!-- Modal para exibir a imagem -->
-      <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-           
-            <div class="modal-header">
-              <h5 class="modal-title" id="imageModalLabel">Imagem do Produto</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            
-            <div class="modal-body">
-              <img :src="modalImageUrl" class="img-fluid" alt="Imagem do Produto" />
-            </div>
-            
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            </div>
+    <!-- Modal para exibir a imagem -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="imageModalLabel">Imagem do Produto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
           
+          <div class="modal-body text-center">
+            <img :src="modalImageUrl" class="img-fluid" alt="Imagem do Produto" />
           </div>
-        </div>
-      </div>
-  
-      <!-- Modal de Criação/Edição -->
-      <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-           
-            <div class="modal-header bg-dark text-white">
-              <h5 class="modal-title" id="modalLabel">{{ isEditing ? 'Editar Produto' : 'Adicionar Produto' }}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            
-            <div class="modal-body">
-              <form @submit.prevent="saveProduct">
-                
-                <div class="mb-3">
-                  <label for="productName" class="form-label">Nome do Produto</label>
-                  <input type="text" class="form-control" id="productName" v-model="product.name" required style="border-radius: 10px;" />
-                </div>
-                
-                <div class="mb-3">
-                  <label for="productDescription" class="form-label">Descrição</label>
-                  <textarea class="form-control" id="productDescription" v-model="product.description" required style="border-radius: 10px;"></textarea>
-                </div>
-               
-                <div class="mb-3">
-                  <label for="productCategory" class="form-label">Categoria</label>
-                  <select class="form-select" id="productCategory" v-model="product.category_id" required>
-                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                      {{ category.name }}
-                    </option>
-                  </select>
-                </div>
-                
-                <div class="mb-3">
-                  <label for="productPrice" class="form-label">Preço</label>
-                  <input type="text" class="form-control" id="productPrice" v-model="product.price" required inputmode="decimal" style="border-radius: 10px;" @input="validatePrice($event)" />
-                </div>
-                
-                <div class="mb-3">
-                  <label for="productQtd" class="form-label">Quantidade</label>
-                  <input type="number" class="form-control" id="productQtd" v-model="product.qtd" required inputmode="numeric" style="border-radius: 10px;" @input="validateQuantity($event)" />
-                </div>
-                
-                <div class="mb-3">
-                  <label for="productImage" class="form-label">Imagem do Produto</label>
-                  <input type="file" class="form-control" id="productImage" @change="handleProductImageUpload" />
-                </div>
-                
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                  <button type="submit" class="btn btn-dark">{{ isEditing ? 'Salvar Alterações' : 'Adicionar' }}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
 
-  
-      <!-- Modal de Confirmação de Exclusão -->
-      <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            
-            <div class="modal-header bg-danger text-white">
-              <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            
-            <div class="modal-body">
-              <p>Tem certeza que deseja excluir o produto <strong>{{ productToDelete?.name }}</strong>?</p>
-            </div>
-            
-            <div class="modal-footer">
-              
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              
-              <button type="button" class="btn btn-danger" @click="confirmDelete">
-                Excluir
-                <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-              </button>
-            </div>
+          <div class="modal-footer">
+            <button @click="downloadImage(imageId)" class="btn btn-primary">Baixar Imagem</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
           </div>
         </div>
       </div>
     </div>
-  </template>
-  <script>
 
-  import axios from 'axios';
-  import { Modal } from 'bootstrap';
-  import api from '@/axios';
+    <!-- Modal de Criação/Edição -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title" id="modalLabel">{{ isEditing ? 'Editar Produto' : 'Adicionar Produto' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          
+          <div class="modal-body">
+            <form @submit.prevent="saveProduct">
+              <div class="mb-3">
+                <label for="productName" class="form-label">Nome do Produto</label>
+                <input type="text" class="form-control" id="productName" v-model="product.name" required />
+              </div>
+              
+              <div class="mb-3">
+                <label for="productDescription" class="form-label">Descrição</label>
+                <textarea class="form-control" id="productDescription" v-model="product.description" required></textarea>
+              </div>
+              
+              <div class="mb-3">
+                <label for="productCategory" class="form-label">Categoria</label>
+                <select class="form-select" id="productCategory" v-model="product.category_id" required>
+                  <option v-for="category in categories" :key="category.id" :value="category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="productPrice" class="form-label">Preço</label>
+                <input type="text" class="form-control" id="productPrice" v-model="product.price" required inputmode="decimal" />
+              </div>
+              
+              <div class="mb-3">
+                <label for="productQtd" class="form-label">Quantidade</label>
+                <input type="number" class="form-control" id="productQtd" v-model="product.qtd" required inputmode="numeric" />
+              </div>
+              
+              <div class="mb-3">
+                <label for="productImage" class="form-label">Imagem do Produto</label>
+                <input type="file" class="form-control" id="productImage" @change="handleProductImageUpload" />
+              </div>
+              
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-dark">{{ isEditing ? 'Salvar Alterações' : 'Adicionar' }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          
+          <div class="modal-body">
+            <p>Tem certeza que deseja excluir o produto <strong>{{ productToDelete?.name }}</strong>?</p>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" @click="confirmDelete">Excluir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+
+  import axios      from 'axios';
+  import { Modal }  from 'bootstrap';
+  import api        from '@/axios';
   
   export default {
     data() {
@@ -263,7 +262,7 @@
 
       validateQuantity(event) {
         event.target.value = event.target.value.replace(/[^0-9]/g, '');
-        this.product.qtd = event.target.value;
+        this.product.qtd   = event.target.value;
       },
       
       async fetchProducts() {
@@ -275,8 +274,7 @@
             headers: { Authorization: `Bearer ${token}` },
           });
          
-          this.products = response.data;
-          
+          this.products         = response.data;
           this.filteredProducts = this.products;
        
         } catch (error) {
@@ -300,37 +298,73 @@
         }
       },
      
-      openImageModal(imageUrl) {
+      openImageModal(imageUrl, imageId) {
+      // console.log(imageId)
+        
         this.modalImageUrl = imageUrl;
-        const imageModal = new Modal(document.getElementById('imageModal'));
+        this.imageId       = imageId;
+        const imageModal   = new Modal(document.getElementById('imageModal'));
         imageModal.show();
+      },
+
+      async downloadImage(imageId) {
+        const token = sessionStorage.getItem('authToken');
+        const url   = `${api.defaults.baseURL}/images/${imageId}/download`;
+
+        try {
+          const response = await axios.get(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            
+            responseType: 'blob',
+          });
+
+          const link    = document.createElement('a');
+          const blob    = new Blob([response.data], { type: response.headers['content-type'] });
+          const urlBlob = window.URL.createObjectURL(blob);
+          link.href     = urlBlob;
+
+          link.setAttribute('download', `imagem_${imageId}.jpg`);
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link); 
+          window.URL.revokeObjectURL(urlBlob);
+        
+        } catch (error) {
+            
+          // console.error('Erro ao baixar a imagem:', error);
+          
+          this.setMessage('Erro ao baixar a imagem', 'alert-danger');
+        }
       },
       
       openCreateModal() {
-        this.isEditing = false;
-        this.product = { name: '', description: '', category_id: null, price: '', qtd: '', image: null };
-        this.modalInstance = new Modal(document.getElementById('productModal'));
+        this.isEditing      = false;
+        this.product        = { name: '', description: '', category_id: null, price: '', qtd: '', image: null };
+        this.modalInstance  = new Modal(document.getElementById('productModal'));
         this.modalInstance.show();
       },
       
       openEditModal(product) {
-        this.isEditing = true;
-        this.product = { ...product };
+        this.isEditing     = true;
+        this.product       = { ...product };
         this.modalInstance = new Modal(document.getElementById('productModal'));
         this.modalInstance.show();
       },
       
       openDeleteModal(product) {
-        this.productToDelete = product;
+        this.productToDelete     = product;
         this.deleteModalInstance = new Modal(document.getElementById('deleteModal'));
         this.deleteModalInstance.show();
       },
       
       handleProductImageUpload(event) {
-          const file = event.target.files[0];
-          if (file) {
-              this.product.image = file;
-          }
+        const file = event.target.files[0];
+        
+        if (file) {
+            this.product.image = file;
+        }
       },
       
       async saveProduct() {
@@ -339,14 +373,14 @@
         
         try {
           const formData = new FormData();
-          formData.append('name', this.product.name);
+          formData.append('name',        this.product.name);
           formData.append('description', this.product.description);
           formData.append('category_id', this.product.category_id);
-          formData.append('price', this.product.price);
-          formData.append('qtd', this.product.qtd);
+          formData.append('price',       this.product.price);
+          formData.append('qtd',         this.product.qtd);
 
           if (this.product.image) {
-            formData.append('image', this.product.image);
+            formData.append('image',     this.product.image);
           }
 
           let url;
@@ -358,7 +392,7 @@
             // Envia os dados com 'multipart/form-data'
             const response = await axios.put(url, formData, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                  'Authorization': `Bearer ${token}`,
                 },
             });
             
@@ -387,9 +421,8 @@
 
       async confirmDelete() {
         
+        const token    = sessionStorage.getItem('authToken');
         this.isLoading = true;
-        
-        const token = sessionStorage.getItem('authToken');
         
         try {
           await axios.delete(`${api.defaults.baseURL}/products/${this.productToDelete.id}`, {
@@ -409,6 +442,7 @@
           this.isLoading = false;
         }
       },
+      
       setMessage(content, type) {
         this.message = { content, type };
       },
@@ -446,141 +480,142 @@
 
 <style scoped>
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+  .custom-title {
+    color: #333;
+    border-bottom: 2px solid #eaeaea; 
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 55px;
+  }
 
-body {
-  font-family: 'Roboto', sans-serif;
-}
-
-h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #000;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-  font-family: 'Roboto', sans-serif;
-}
-
-.card {
-  border-radius: 15px;
-  border: none;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  background-color: #343a40;
-  border-radius: 15px 15px 0 0;
-}
-
-.table {
-  width: 100%;
-}
-
-.table-bordered {
-  border: 1px solid #dee2e6;
-}
-
-.table-dark {
-  background-color: #343a40;
-  color: white;
-}
-
-.modal-header {
-  background-color: #343a40;
-  color: white;
-}
-
-.modal-footer .btn-dark {
-  background-color: #343a40;
-  border-color: #343a40;
-}
-
-.btn {
-  border-radius: 25px;
-  padding: 8px 20px;
-}
-
-.image-circle {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-@media (max-width: 1024px) {
   h1 {
     font-size: 2rem;
+    font-weight: bold;
+    color: #000;
   }
 
-  .table-responsive {
-    margin-bottom: 30px;
+  .btn-add-category {
+    background-color: #343a40;
+    color: #fff;
+    border-radius: 30px;
+    padding: 10px 20px;
   }
 
-  .pagination {
-    font-size: 0.8rem;
-  }
-
-  .table {
-    font-size: 0.9rem;
+  .btn-add-category:hover {
+    background-color: #000;
   }
 
   .card {
-    margin: 10px;
-  }
-}
-
-@media (max-width: 768px) {
-  h1 {
-    font-size: 1.8rem;
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 
   .card-header {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .form-control-lg {
-    max-width: 100%;
-  }
-
-  .btn {
-    margin-top: 10px;
-    width: 100%;
-    border-radius: 25px;
-  }
-
-  .table-responsive {
-    margin-bottom: 30px;
-    padding: 0 10px;
+    background-color: #343a40;
+    color: #fff;
   }
 
   .table {
-    font-size: 0.8rem;
+    width: 100%;
   }
 
-  .pagination {
-    font-size: 0.7rem;
-  }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.5rem;
+  .table-bordered {
+    border: 1px solid #dee2e6;
   }
 
-  .table-responsive {
-    margin-bottom: 20px;
+  .table-dark {
+    background-color: #000;
   }
 
-  .pagination {
-    font-size: 0.6rem;
+  .image-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
   }
 
-  .btn {
-    font-size: 0.9rem;
-    padding: 10px 15px;
+  .action-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-edit {
+    background-color: #01579b;
+    color: #fff;
     border-radius: 20px;
   }
-}
+
+  .btn-delete {
+    background-color: #e65100;
+    color: #fff;
+    border-radius: 20px;
+  }
+
+  .btn-edit, .btn-delete {
+    margin: 5px;
+  }
+
+  .pagination-container {
+    overflow-x: auto; 
+    white-space: nowrap; 
+    padding: 10px 0; 
+  }
+
+  .page-link {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pagination .page-item.disabled .page-link {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .pagination .page-item.active .page-link {
+    background-color: #343a40;
+    border-color: #343a40;
+    color: white;
+  }
+
+  .modal-header.bg-dark {
+    background-color: #343a40;
+  }
+
+  .modal-header.bg-danger {
+    background-color: #dc3545;
+  }
+
+  @media (max-width: 768px) {
+    
+    .custom-title {
+      font-size: 28px;
+    }
+    
+    .pagination {
+      flex-direction: row;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+
+    .page-link {
+      font-size: 14px;
+      width: 35px;
+      height: 35px;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .btn-edit, .btn-delete {
+      width: 100%;
+    }
+  }
 </style>
