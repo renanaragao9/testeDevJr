@@ -8,20 +8,32 @@
             <li class="nav-item">
               <router-link class="nav-link" v-if="!isAuthenticated" to="/register">Registro</router-link>
             </li>
+
+            <li class="nav-item" v-if="!isAuthenticated">
+              <router-link class="nav-link" to="/login">Login</router-link>
+            </li>
             
             <li class="nav-item">
               <router-link class="nav-link" v-if="isAuthenticated" to="/teste-backend">Teste Backend</router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link class="nav-link" v-if="isAuthenticated" to="/">Dashboard</router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link class="nav-link" v-if="isAuthenticated" to="/categorias">Categorias</router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link class="nav-link" v-if="isAuthenticated" to="/produtos">Produtos</router-link>
             </li>
             
             <!-- Exibe o nome do usuário se autenticado -->
             <li class="nav-item" v-if="isAuthenticated">
               <span class="nav-link">Olá, {{ userName }}</span>
             </li>
-            
-            <li class="nav-item" v-if="!isAuthenticated">
-              <router-link class="nav-link" to="/login">Login</router-link>
-            </li>
-            
+      
             <!-- Botão de logout se autenticado -->
             <li class="nav-item" v-if="isAuthenticated">
               <button class="nav-link btn btn-link" @click="logout">Logout</button>
@@ -36,33 +48,32 @@
 
 <script>
 import axios from 'axios';
-
+import api from '@/axios';
 export default {
   name: 'App',
   data() {
     return {
       timeout: null,
-      timeoutDuration: 60 * 60 * 1000, // 60 minutos em milissegundos
+      timeoutDuration: 60 * 60 * 1000, // Após 60 minutos de inatividade a sessão do token será encerrada
     };
   },
   computed: {
     isAuthenticated() {
-      return !!sessionStorage.getItem('authToken'); // Verifica se o token existe no sessionStorage
+      return !!sessionStorage.getItem('authToken');
     },
     userName() {
-      return sessionStorage.getItem('userName'); // Obtém o nome do usuário salvo no sessionStorage
+      return sessionStorage.getItem('userName');
     }
   },
   created() {
-    this.startIdleTimer(); // Inicia o timer de inatividade
+    this.startIdleTimer(); // Inicia o tempo de inatividade
   },
   methods: {
     async logout() {
       try {
         const token = sessionStorage.getItem('authToken');
         if (token) {
-          // Envia a requisição para o logout no servidor
-          await axios.post('http://localhost:8000/api/logout', {}, {
+          await api.post('/logout', {}, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -85,17 +96,17 @@ export default {
         console.error('Erro ao realizar logout:', error);
       }
     },
+    // Logica para logout apos os 60 minutos de inatividade
     resetTimer() {
-      clearTimeout(this.timeout); // Limpa o timer atual
-      this.startIdleTimer(); // Reinicia o timer
+      clearTimeout(this.timeout);
+      this.startIdleTimer();
     },
     startIdleTimer() {
       this.timeout = setTimeout(() => {
-        // Remove token e redireciona para login
         sessionStorage.removeItem('authToken');
         sessionStorage.removeItem('userName');
         this.$router.push({ name: 'Login' }).then(() => {
-          window.location.reload(); // Recarrega a página
+          window.location.reload();
         });
       }, this.timeoutDuration);
     }

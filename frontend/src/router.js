@@ -1,25 +1,50 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import TesteBackendView from './views/TesteBackendView.vue';
-import RegisterView from './views/Auth/RegisterView.vue';
-import LoginView from './views/Auth/LoginView.vue';
-import CategoriesView from './views/Categories/CategoriesView.vue';
-
+import TesteBackendView                   from './views/TesteBackendView.vue';
+import RegisterView                       from './views/Auth/RegisterView.vue';
+import LoginView                          from './views/Auth/LoginView.vue';
+import CategoriesView                     from './views/Categories/CategoriesView.vue';
+import ProductsView                       from './views/Products/ProductsView.vue';
+import DashboardView                      from './views/Dashboard/DashboardView.vue';
 
 // Função para verificar se o usuário está autenticado
 function isAuthenticated() {
-  return !!sessionStorage.getItem('authToken'); // Retorna true se o token existir
+  return !!sessionStorage.getItem('authToken');
 }
 
 const routes = [
   {
-    path: '/categories',
+    path: '/',
+    name: 'Dashboard',
+    component: DashboardView,
+    beforeEnter: (to, from, next) => {
+      if (isAuthenticated()) {
+        next();
+      } else {
+        next({ name: 'Login' });
+      }
+    },
+  },
+  {
+    path: '/categorias',
     name: 'Categories',
     component: CategoriesView,
     beforeEnter: (to, from, next) => {
       if (isAuthenticated()) {
-        next(); // Acesso permitido
+        next();
       } else {
-        next({ name: 'Login' }); // Redireciona para o login se não autenticado
+        next({ name: 'Login' });
+      }
+    },
+  },
+  {
+    path: '/produtos',
+    name: 'Products',
+    component: ProductsView,
+    beforeEnter: (to, from, next) => {
+      if (isAuthenticated()) {
+        next();
+      } else {
+        next({ name: 'Login' });
       }
     },
   },
@@ -28,11 +53,10 @@ const routes = [
     name: 'TesteBackend',
     component: TesteBackendView,
     beforeEnter: (to, from, next) => {
-      // Verifica se o usuário está autenticado antes de permitir o acesso
       if (isAuthenticated()) {
-        next(); // Acesso permitido
+        next();
       } else {
-        next({ name: 'Login' }); // Redireciona para o login se não autenticado
+        next({ name: 'Login' });
       }
     },
   },
@@ -41,11 +65,10 @@ const routes = [
     name: 'Register',
     component: RegisterView,
     beforeEnter: (to, from, next) => {
-      // Verifica se o usuário já está autenticado
       if (!isAuthenticated()) {
-        next(); // Acesso permitido
+        next();
       } else {
-        next({ name: 'TesteBackend' }); // Redireciona para o teste-backend se já autenticado
+        next({ name: 'TesteBackend' });
       }
     },
   },
@@ -54,11 +77,10 @@ const routes = [
     name: 'Login',
     component: LoginView,
     beforeEnter: (to, from, next) => {
-      // Verifica se o usuário já está autenticado
       if (!isAuthenticated()) {
-        next(); // Acesso permitido
+        next();
       } else {
-        next({ name: 'TesteBackend' }); // Redireciona para o teste-backend se já autenticado
+        next({ name: 'TesteBackend' });
       }
     },
   },
