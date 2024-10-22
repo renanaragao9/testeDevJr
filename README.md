@@ -10,8 +10,10 @@ Após clonar o projeto, abra a pasta raiz no Visual Studio Code (VSCode) ou em s
 3. Configuração do Backend
 Navegue até a pasta do backend:
 cd backend/
+
 Dentro da pasta backend, instale as dependências do Laravel:
 composer install
+
 Em seguida, gere a chave da aplicação Laravel:
 php artisan key:generate
 
@@ -49,9 +51,11 @@ Frontend URL base: frontend/.env
 
 Rota base para o sistema: src/axios.js
 
-Configuração adicional da URL:
+Configuração adicional da URL da imagem:
 src/components/Products/ProductsList.vue
 src/Categories/CategoriesList.vue
+
+obs: Não foi possível configurar o caminho da imagem no arquivo .env será preciso alteração manual
 
 Após todas as configurações, o sistema deve funcionar normalmente.
 
